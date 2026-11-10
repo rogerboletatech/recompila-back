@@ -1,0 +1,360 @@
+openapi: 3.1.0
+info:
+  title: Recompila BFF
+  description: BFF do Recompila. Expõe conversa com o agente, trilhas, raio-x e cadastro
+    ao front Angular. Autenticação via OAuth2 com Bearer JWT.
+  version: 0.1.0
+paths:
+  /api/conversa:
+    post:
+      tags:
+      - conversa
+      summary: Envia uma mensagem ao agente
+      operationId: post_conversa_api_conversa_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConversaIn'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConversaOut'
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Escopo insuficiente
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - OAuth2AuthorizationCodeBearer:
+        - recompila:read
+  /api/trilhas:
+    get:
+      tags:
+      - trilhas
+      summary: Lista as trilhas do Recompila
+      operationId: get_trilhas_api_trilhas_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/TrilhaOut'
+                type: array
+                title: Response Get Trilhas Api Trilhas Get
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Escopo insuficiente
+      security:
+      - OAuth2AuthorizationCodeBearer:
+        - recompila:read
+  /api/trilhas/{trilha_id}:
+    get:
+      tags:
+      - trilhas
+      summary: Detalha uma trilha
+      operationId: get_trilha_api_trilhas__trilha_id__get
+      security:
+      - OAuth2AuthorizationCodeBearer:
+        - recompila:read
+      parameters:
+      - name: trilha_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Trilha Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrilhaOut'
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Escopo insuficiente
+        '404':
+          description: Trilha não encontrada
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/raio-x:
+    post:
+      tags:
+      - raio-x
+      summary: Recomenda uma trilha a partir das habilidades informadas
+      operationId: post_raio_x_api_raio_x_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RaioXIn'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RaioXOut'
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Escopo insuficiente
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - OAuth2AuthorizationCodeBearer:
+        - recompila:read
+  /api/cadastro:
+    post:
+      tags:
+      - cadastro
+      summary: Inscreve a pessoa em uma trilha
+      operationId: post_cadastro_api_cadastro_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CadastroIn'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CadastroOut'
+        '401':
+          description: Token ausente ou inválido
+        '403':
+          description: Escopo insuficiente
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - OAuth2AuthorizationCodeBearer:
+        - recompila:write
+  /health:
+    get:
+      tags:
+      - sistema
+      summary: Verifica se o serviço está no ar
+      operationId: health_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+                title: Response Health Health Get
+components:
+  schemas:
+    CadastroIn:
+      properties:
+        nome:
+          type: string
+          maxLength: 120
+          minLength: 2
+          title: Nome
+          examples:
+          - Maria Souza
+        email:
+          type: string
+          maxLength: 254
+          title: Email
+          examples:
+          - maria@exemplo.com
+        trilha:
+          type: string
+          title: Trilha
+          examples:
+          - devs
+      type: object
+      required:
+      - nome
+      - email
+      - trilha
+      title: CadastroIn
+    CadastroOut:
+      properties:
+        id:
+          type: string
+          title: Id
+        trilha:
+          type: string
+          title: Trilha
+        status:
+          type: string
+          title: Status
+          examples:
+          - recebido
+      type: object
+      required:
+      - id
+      - trilha
+      - status
+      title: CadastroOut
+    ConversaIn:
+      properties:
+        mensagem:
+          type: string
+          maxLength: 2000
+          minLength: 1
+          title: Mensagem
+          examples:
+          - Sou dev front, quero virar arquiteto
+      type: object
+      required:
+      - mensagem
+      title: ConversaIn
+    ConversaOut:
+      properties:
+        texto:
+          type: string
+          title: Texto
+        intencao:
+          type: string
+          title: Intencao
+          examples:
+          - stack
+        sugestoes:
+          items:
+            type: string
+          type: array
+          title: Sugestoes
+      type: object
+      required:
+      - texto
+      - intencao
+      - sugestoes
+      title: ConversaOut
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    RaioXIn:
+      properties:
+        habilidades:
+          items:
+            type: string
+            maxLength: 60
+            minLength: 1
+          type: array
+          maxItems: 30
+          minItems: 1
+          title: Habilidades
+          examples:
+          - - Python
+            - SQL
+            - Git
+      type: object
+      required:
+      - habilidades
+      title: RaioXIn
+    RaioXOut:
+      properties:
+        trilha_recomendada:
+          type: string
+          title: Trilha Recomendada
+          examples:
+          - devs
+        justificativa:
+          type: string
+          title: Justificativa
+      type: object
+      required:
+      - trilha_recomendada
+      - justificativa
+      title: RaioXOut
+    TrilhaOut:
+      properties:
+        id:
+          type: string
+          title: Id
+          examples:
+          - devs
+        nome:
+          type: string
+          title: Nome
+        titulo:
+          type: string
+          title: Titulo
+        resumo:
+          type: string
+          title: Resumo
+      type: object
+      required:
+      - id
+      - nome
+      - titulo
+      - resumo
+      title: TrilhaOut
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+  securitySchemes:
+    OAuth2AuthorizationCodeBearer:
+      type: oauth2
+      flows:
+        authorizationCode:
+          scopes:
+            recompila:read: Ler trilhas, conversar com o agente e fazer o raio-x
+            recompila:write: Enviar cadastro para uma trilha
+          authorizationUrl: https://auth.recompila.local/oauth2/authorize
+          tokenUrl: https://auth.recompila.local/oauth2/token
